@@ -11,7 +11,7 @@ void main() async {
   // 1. تهيئة Supabase أولاً قبل أي شيء
   await Supabase.initialize(
     url:
-        'https://gkmswfzekvqxdcwyphot.supabase.co/rest/v1/', // ضع URL مشروعك من Supabase
+        'https://gkmswfzekvqxdcwyphot.supabase.co', // بدون /rest/v1 — Supabase بيضيفها تلقائياً
     anonKey:
         'sb_publishable_id75XirRunhYcp_8qwkcqg_6sSWsIYx', // ضع anon key من Supabase
   );
