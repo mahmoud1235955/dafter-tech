@@ -4,7 +4,10 @@ import 'package:daftar_tech/features/auth/data/datasources/auth_local_datasource
 import 'package:daftar_tech/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:daftar_tech/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:daftar_tech/features/auth/domain/repositories/auth_repository.dart';
+import 'package:daftar_tech/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:daftar_tech/features/auth/domain/usecases/register_user_usecase.dart';
+import 'package:daftar_tech/features/auth/domain/usecases/send_otp_usecase.dart';
+import 'package:daftar_tech/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:daftar_tech/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:get_it/get_it.dart';
 
@@ -49,9 +52,14 @@ Future<void> initDependencies() async {
 
   // UseCases
   sl.registerLazySingleton(() => RegisterUserUseCase(sl()));
+  sl.registerLazySingleton(() => SendOtpUseCase(sl()));
+  sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
+  sl.registerLazySingleton(() => SignOutUseCase(sl()));
 
   // Cubit
-  sl.registerFactory(() => AuthCubit(registerUserUseCase: sl()));
+  sl.registerFactory(
+    () => AuthCubit(registerUserUseCase: sl(), sendOtpUseCase: sl()),
+  );
 
   // ================= Customers Feature =================
   // DataSources
