@@ -1,11 +1,12 @@
+import 'app_constants.dart';
 import 'phone_formatter.dart';
 
 /// رسائل وتحقق مدخلات نماذج المصادقة (الهاتف ورمز التأكيد).
 abstract class Validators {
   Validators._();
 
-  /// عدد خانات رمز التأكيد.
-  static const int otpLength = 4;
+  /// عدد خانات رمز التأكيد (نفس إعداد Supabase).
+  static const int otpLength = AppConstants.otpLength;
 
   static final RegExp _nonDigits = RegExp(r'\D');
 

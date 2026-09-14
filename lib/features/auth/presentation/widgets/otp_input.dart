@@ -147,8 +147,11 @@ class _OtpInputState extends State<OtpInput> {
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
-            final boxWidth = (constraints.maxWidth - (widget.length - 1) * 12) /
-                widget.length;
+            // المسافة بين الخانات بتقل مع زيادة عددها (6 خانات = 8 بدل 12)
+            final spacing = widget.length > 4 ? 8.0 : 12.0;
+            final boxWidth =
+                (constraints.maxWidth - (widget.length - 1) * spacing) /
+                    widget.length;
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(

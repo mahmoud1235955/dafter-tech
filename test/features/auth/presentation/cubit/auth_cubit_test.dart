@@ -3,6 +3,7 @@ import 'package:daftar_tech/core/utils/app_constants.dart';
 import 'package:daftar_tech/features/auth/data/models/user_model.dart';
 import 'package:daftar_tech/features/auth/domain/entities/user_entity.dart';
 import 'package:daftar_tech/features/auth/domain/repositories/auth_repository.dart';
+import 'package:daftar_tech/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:daftar_tech/features/auth/domain/usecases/register_user_usecase.dart';
 import 'package:daftar_tech/features/auth/domain/usecases/send_otp_usecase.dart';
 import 'package:daftar_tech/features/auth/presentation/cubit/auth_cubit.dart';
@@ -17,6 +18,9 @@ class FakeAuthRepository implements AuthRepository {
   final Failure? sendOtpFailure;
   final Failure? registerFailure;
 
+  UserEntity? currentUser;
+  bool signedOut = false;
+
   final List<String> sentPhones = <String>[];
   final List<String> registerPhones = <String>[];
 
@@ -24,6 +28,17 @@ class FakeAuthRepository implements AuthRepository {
   Future<Either<Failure, Unit>> sendOtp(String phone) async {
     sentPhones.add(phone);
     if (sendOtpFailure != null) return Left(sendOtpFailure!);
+    return const Right(unit);
+  }
+
+  @override
+  Future<Either<Failure, UserEntity?>> getCurrentUser() async {
+    return Right(currentUser);
+  }
+
+  @override
+  Future<Either<Failure, Unit>> signOut() async {
+    signedOut = true;
     return const Right(unit);
   }
 
@@ -120,6 +135,26 @@ void main() {
     expect(repository.registerPhones, ['+201098765432']);
     expect(cubit.state, isA<AuthSuccess>());
     expect((cubit.state as AuthSuccess).user.phone, '+201098765432');
+  });
+
+  test('GetCurrentUserUseCase يرجع null لو مفيش مستخدم محفوظ', () async {
+    final result = await GetCurrentUserUseCase(repository)();
+
+    expect(result.isRight(), isTrue);
+    expect(result.fold((_) => null, (user) => user), isNull);
+  });
+
+  test('GetCurrentUserUseCase يرجع المستخدم الحالي لو موجود', () async {
+    repository.currentUser = UserModel(
+      id: 'usr_1',
+      phone: '+201098765432',
+      businessType: BusinessType.grocery,
+      createdAt: DateTime(2024),
+    );
+
+    final result = await GetCurrentUserUseCase(repository)();
+
+    expect(result.fold((_) => null, (user) => user?.id), 'usr_1');
   });
 
   test('submitRegister يرجع AuthError عند فشل التحقق', () async {

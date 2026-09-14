@@ -12,7 +12,11 @@ class AppConstants {
   static const String appVersion = '2.4';
 
   /// عدد خانات رمز التأكيد.
-  static const int otpLength = 4;
+  ///
+  /// لازم يطابق إعداد `SMS OTP Length` في Supabase
+  /// (Dashboard → Authentication → Providers → Phone).
+  /// الافتراضي 6، وأقل قيمة يقبلها Supabase هي 6.
+  static const int otpLength = 6;
 
   /// مدة الانتظار (بالثواني) قبل السماح بإعادة إرسال الرمز.
   static const int otpResendCooldownSeconds = 60;
