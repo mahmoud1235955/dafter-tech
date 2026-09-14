@@ -1,0 +1,41 @@
+name: daftar_tech
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management & DI
+  flutter_bloc: ^8.1.6
+  get_it: ^7.7.0
+  equatable: ^2.0.5
+  url_launcher: ^6.3.0
+  
+  # Functional Programming & Errors
+  dartz: ^0.10.1
+
+  # Local Database
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+
+  # Network & Backend
+  supabase_flutter: ^2.5.6
+  connectivity_plus: ^6.0.3
+
+  # UI Utilities & Styling
+  google_fonts: ^6.2.1
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
