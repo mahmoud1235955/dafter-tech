@@ -10,6 +10,10 @@ class AppConstants {
   static const String currencyEgp = 'ج.م';
   static const String currencyEgpEn = 'EGP';
 
+  /// اللغة الافتراضية للتطبيق (عربية مصرية)
+  static const String defaultLocale = 'ar';
+  static const String defaultLocaleCountry = 'EG';
+
   /// رقم الدعم الفني (واتساب)
   static const String supportPhone = '01000000000';
   static const String supportName = 'الدعم الفني لدفترتك';
