@@ -21,3 +21,11 @@ class ServerFailure extends Failure {
 class NetworkFailure extends Failure {
   const NetworkFailure([super.message = 'لا يوجد اتصال بالإنترنت']);
 }
+
+class CacheFailure extends Failure {
+  const CacheFailure([super.message = 'حدث خطأ أثناء استرجاع البيانات المخزنة']);
+}
+
+class AuthFailure extends Failure {
+  const AuthFailure([super.message = 'فشلت عملية المصادقة، يرجى المحاولة لاحقاً']);
+}
