@@ -40,6 +40,37 @@ class CustomerModel extends CustomerEntity {
     };
   }
 
+  /// تحويل الـ Model إلى JSON مطابق لأعمدة جدول Supabase (snake_case)
+  /// ملاحظة: `owner_id` مش بتتبعت من هنا — الجدول بيملأها تلقائياً بـ `auth.uid()`
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'phone': phone,
+      'address': address,
+      'total_debt': totalDebt,
+      'credit_limit': creditLimit,
+      'last_transaction_at': lastTransactionAt.toIso8601String(),
+      'is_synced': isSynced,
+    };
+  }
+
+  /// تحويل الصفوف القادمة من Supabase (snake_case) إلى Model
+  factory CustomerModel.fromJson(Map<String, dynamic> json) {
+    return CustomerModel(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      phone: json['phone'] as String,
+      address: json['address'] as String?,
+      totalDebt: (json['total_debt'] as num?)?.toDouble() ?? 0,
+      creditLimit: (json['credit_limit'] as num?)?.toDouble() ?? 0,
+      lastTransactionAt: json['last_transaction_at'] == null
+          ? DateTime.now()
+          : DateTime.parse(json['last_transaction_at'] as String),
+      isSynced: json['is_synced'] == true || json['is_synced'] == 1,
+    );
+  }
+
   // دالة مساعدة لإنشاء Model انطلاقاً من Entity
   factory CustomerModel.fromEntity(CustomerEntity entity) {
     return CustomerModel(

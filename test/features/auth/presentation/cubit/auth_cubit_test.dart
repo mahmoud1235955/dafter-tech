@@ -6,6 +6,7 @@ import 'package:daftar_tech/features/auth/domain/repositories/auth_repository.da
 import 'package:daftar_tech/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:daftar_tech/features/auth/domain/usecases/register_user_usecase.dart';
 import 'package:daftar_tech/features/auth/domain/usecases/send_otp_usecase.dart';
+import 'package:daftar_tech/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:daftar_tech/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:daftar_tech/features/auth/presentation/cubit/auth_state.dart';
 import 'package:dartz/dartz.dart';
@@ -70,6 +71,8 @@ void main() {
   AuthCubit buildCubit(AuthRepository repo) => AuthCubit(
         registerUserUseCase: RegisterUserUseCase(repo),
         sendOtpUseCase: SendOtpUseCase(repo),
+        getCurrentUserUseCase: GetCurrentUserUseCase(repo),
+        signOutUseCase: SignOutUseCase(repo),
       );
 
   setUp(() {
@@ -172,5 +175,60 @@ void main() {
 
     expect(failingCubit.state, isA<AuthError>());
     expect((failingCubit.state as AuthError).message, 'الرمز غير صحيح');
+  });
+
+  test('loadCurrentUser يرجع AuthAuthenticated ويخزّن المستخدم', () async {
+    repository.currentUser = UserModel(
+      id: 'usr_1',
+      phone: '+201098765432',
+      businessType: BusinessType.grocery,
+      createdAt: DateTime(2024),
+    );
+
+    await cubit.loadCurrentUser();
+
+    expect(cubit.state, isA<AuthAuthenticated>());
+    expect((cubit.state as AuthAuthenticated).user.id, 'usr_1');
+    expect(cubit.currentUser?.id, 'usr_1');
+  });
+
+  test('loadCurrentUser يفضل AuthInitial لو مفيش جلسة سارية', () async {
+    await cubit.loadCurrentUser();
+
+    expect(cubit.state, isA<AuthInitial>());
+    expect(cubit.currentUser, isNull);
+  });
+
+  test('signOut يمسح الجلسة ويرجع AuthSignedOut', () async {
+    repository.currentUser = UserModel(
+      id: 'usr_1',
+      phone: '+201098765432',
+      businessType: BusinessType.wholesaler,
+      createdAt: DateTime(2024),
+    );
+    await cubit.loadCurrentUser();
+    expect(cubit.currentUser, isNotNull);
+
+    await cubit.signOut();
+
+    expect(repository.signedOut, isTrue);
+    expect(cubit.state, isA<AuthSignedOut>());
+    expect(cubit.currentUser, isNull);
+  });
+
+  test('submitRegister يخزّن المستخدم بعد نجاح التسجيل', () async {
+    await cubit.submitRegister(
+      phone: validPhone,
+      otp: '4285',
+      businessType: BusinessType.grocery,
+    );
+
+    expect(cubit.currentUser?.phone, '+201098765432');
+  });
+
+  test('BusinessTypeLabel يرجع التسمية العربية لكل نوع نشاط', () {
+    expect(BusinessType.grocery.labelAr, 'بقالة / محل');
+    expect(BusinessType.wholesaler.labelAr, 'موزع / جملة');
+    expect(BusinessType.onlineStore.labelAr, 'مشروع منزلي / أونلاين');
   });
 }
