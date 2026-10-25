@@ -65,3 +65,18 @@ class AuthOtpError extends AuthState {
   @override
   List<Object?> get props => [message];
 }
+
+/// في جلسة سارية بالفعل (المستخدم فاتح التطبيق وهو مسجّل من قبل).
+class AuthAuthenticated extends AuthState {
+  final UserEntity user;
+
+  const AuthAuthenticated(this.user);
+
+  @override
+  List<Object?> get props => [user];
+}
+
+/// تم تسجيل الخروج ومسح الجلسة.
+class AuthSignedOut extends AuthState {
+  const AuthSignedOut();
+}

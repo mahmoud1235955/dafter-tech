@@ -4,6 +4,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/responsive_helper.dart';
+import '../../../auth/domain/entities/user_entity.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../auth/presentation/cubit/auth_state.dart';
+import '../../../auth/presentation/screens/register_screen.dart';
 import '../../../customers/presentation/cubit/customer_cubit.dart';
 import '../../../customers/presentation/screens/add_customer_screen.dart';
 import '../../../customers/presentation/screens/customers_list_screen.dart';
@@ -26,6 +30,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     context.read<TransactionCubit>().loadDashboardData();
     context.read<CustomerCubit>().loadCustomers();
+  }
+
+  /// تأكيد ثم تنفيذ تسجيل الخروج والعودة لشاشة التسجيل.
+  Future<void> _confirmSignOut() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('تسجيل الخروج'),
+        content: const Text(
+          'بياناتك محفوظة على الجهاز، وتقدر تسجّل دخول تاني في أي وقت.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('تسجيل الخروج'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    await context.read<AuthCubit>().signOut();
+
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const RegisterScreen()),
+      (route) => false,
+    );
   }
 
   void _onVoiceAssistantTap() {
@@ -57,26 +94,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'محمود حمادة عاشور',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              Text(
-                'متجر البقالة • ${AppConstants.appName}',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.normal,
-                ),
-              ),
-            ],
+          title: BlocBuilder<AuthCubit, AuthState>(
+            builder: (context, authState) {
+              final user = authState is AuthSuccess
+                  ? authState.user
+                  : authState is AuthAuthenticated
+                      ? authState.user
+                      : null;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user?.phone ?? AppConstants.appName,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    user != null
+                        ? '${user.businessType.labelAr} • ${AppConstants.appName}'
+                        : AppConstants.appSlogan,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           actions: [
             IconButton(
@@ -94,6 +143,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               },
             ),
+            PopupMenuButton<String>(
+              tooltip: 'الحساب',
+              icon: const Icon(
+                Icons.more_horiz_rounded,
+                color: AppColors.textPrimary,
+              ),
+              onSelected: (value) {
+                if (value == 'logout') _confirmSignOut();
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Text('تسجيل الخروج'),
+                ),
+              ],
+            ),
           ],
         ),
         body: SafeArea(
@@ -107,9 +172,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               },
               child: BlocBuilder<TransactionCubit, TransactionState>(
                 builder: (context, state) {
-                  double totalDebt = 12450.0;
-                  double totalCredit = 3200.0;
-                  int customerCount = 18;
+                  double totalDebt = 0;
+                  double totalCredit = 0;
+                  int customerCount = 0;
                   List<TransactionEntity> recentTransactions = [];
 
                   if (state is TransactionLoaded) {
@@ -285,7 +350,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            CurrencyFormatter.format(totalDebt > 0 ? totalDebt : 12450.0),
+            CurrencyFormatter.format(totalDebt),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 32,
@@ -453,57 +518,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildRecentTransactionsList(List<TransactionEntity> transactions) {
     if (transactions.isEmpty) {
-      // إظهار معاملات نموذجية لتجربة واجهة سلسة ومطابقة للتصميم
-      final sampleTransactions = [
-        TransactionEntity(
-          id: '1',
-          customerId: 'c1',
-          customerName: 'أحمد محمد علي',
-          amount: 1500.0,
-          type: TransactionType.goodsDelivered,
-          paymentMethod: PaymentMethod.cash,
-          notes: 'بضاعة بقالة وسكر وزيت',
-          transactionDate: DateTime.now().subtract(const Duration(hours: 2)),
-        ),
-        TransactionEntity(
-          id: '2',
-          customerId: 'c2',
-          customerName: 'سيد علي حسن',
-          amount: 500.0,
-          type: TransactionType.paymentReceived,
-          paymentMethod: PaymentMethod.instaPay,
-          notes: 'سداد دفعة نقدية عبر انستاباي',
-          transactionDate: DateTime.now().subtract(const Duration(hours: 5)),
-        ),
-        TransactionEntity(
-          id: '3',
-          customerId: 'c3',
-          customerName: 'محمود أحمد عثمان',
-          amount: 750.0,
-          type: TransactionType.goodsDelivered,
-          paymentMethod: PaymentMethod.cash,
-          notes: 'مشتريات بالآجل',
-          transactionDate: DateTime.now().subtract(const Duration(days: 1)),
-        ),
-        TransactionEntity(
-          id: '4',
-          customerId: 'c4',
-          customerName: 'مصطفى كمال',
-          amount: 2000.0,
-          type: TransactionType.paymentReceived,
-          paymentMethod: PaymentMethod.vodafoneCash,
-          notes: 'سداد كامل الحساب',
-          transactionDate: DateTime.now().subtract(const Duration(days: 2)),
-        ),
-      ];
-
-      return Column(
-        children: sampleTransactions.map((tx) => _buildTransactionCard(tx)).toList(),
-      );
+      return _buildEmptyTransactionsCard();
     }
 
     return Column(
       children: transactions.map((tx) => _buildTransactionCard(tx)).toList(),
+    );
+  }
+
+  /// حالة «لا توجد معاملات» — بدل عرض بيانات وهمية في دفتر حقيقي.
+  Widget _buildEmptyTransactionsCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: const Column(
+        children: [
+          Icon(
+            Icons.receipt_long_rounded,
+            color: AppColors.textSecondary,
+            size: 34,
+          ),
+          SizedBox(height: 12),
+          Text(
+            'لا توجد معاملات بعد',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'ابدأ بتسجيل أول عملية من «إجراءات سريعة» في الأعلى',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -680,11 +739,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const AddTransactionScreen(
-                        initialCustomerName: 'أحمد محمد',
-                        initialAmount: 1500.0,
-                        initialNotes: 'بضاعة بقالة',
-                      ),
+                      builder: (_) => const AddTransactionScreen(),
                     ),
                   );
                 },

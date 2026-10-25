@@ -74,7 +74,12 @@ Future<void> initDependencies() async {
 
   // Cubit
   sl.registerFactory(
-    () => AuthCubit(registerUserUseCase: sl(), sendOtpUseCase: sl()),
+    () => AuthCubit(
+      registerUserUseCase: sl(),
+      sendOtpUseCase: sl(),
+      getCurrentUserUseCase: sl(),
+      signOutUseCase: sl(),
+    ),
   );
 
   // ================= 3. Customers Feature =================

@@ -49,13 +49,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     _selectedType = widget.initialType ?? TransactionType.goodsDelivered;
 
     _amountController = TextEditingController(
-      text: widget.initialAmount != null
-          ? widget.initialAmount!.toStringAsFixed(0)
-          : '1500',
+      text: widget.initialAmount?.toStringAsFixed(0) ?? '',
     );
 
     _notesController = TextEditingController(
-      text: widget.initialNotes ?? 'بضاعة بقالة',
+      text: widget.initialNotes ?? '',
     );
 
     context.read<CustomerCubit>().loadCustomers();

@@ -94,7 +94,19 @@ class CustomerRepositoryImpl implements CustomerRepository {
   @override
   Future<Either<Failure, Unit>> deleteCustomer(String id) async {
     try {
+      // 1. الحذف المحلي فوراً (Offline-First)
       await localDataSource.deleteCustomer(id);
+
+      // 2. حذف النسخة السحابية لو فيه إنترنت، حتى لا تفضل بيانات يتيمة
+      final connectivityResult = await connectivity.checkConnectivity();
+      if (!connectivityResult.contains(ConnectivityResult.none)) {
+        try {
+          await remoteDataSource.deleteCustomer(id);
+        } catch (_) {
+          // النسخة المحلية اتحذفت بالفعل؛ المزامنة هتتصلح في المرة الجاية
+        }
+      }
+
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure(e.toString()));

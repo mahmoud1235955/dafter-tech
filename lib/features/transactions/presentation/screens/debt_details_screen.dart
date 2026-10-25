@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/communication_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/responsive_helper.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../customers/domain/entities/customer_entity.dart';
 import '../../../customers/presentation/cubit/customer_cubit.dart';
 import '../../domain/entities/transaction_entity.dart';
@@ -32,11 +34,16 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen> {
   }
 
   void _onWhatsAppReminder() {
+    // اسم التاجر بييجي من حساب المستخدم الحقيقي، مش قيمة ثابتة
+    final user = context.read<AuthCubit>().currentUser;
+
     CommunicationService.sendWhatsAppReminder(
       phone: _customer.phone,
       customerName: _customer.name,
-      debtAmount: _customer.totalDebt > 0 ? _customer.totalDebt : 1500.0,
-      merchantName: 'محمود حمادة عاشور (دفترتك)',
+      debtAmount: _customer.totalDebt,
+      merchantName: user != null
+          ? '${AppConstants.appName} (${user.phone})'
+          : AppConstants.appName,
     );
   }
 
@@ -61,7 +68,7 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentDebt = _customer.totalDebt > 0 ? _customer.totalDebt : 1500.0;
+    final currentDebt = _customer.totalDebt;
 
     return Directionality(
       textDirection: TextDirection.rtl,

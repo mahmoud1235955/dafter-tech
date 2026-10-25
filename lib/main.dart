@@ -48,7 +48,7 @@ class DaftarTechApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthCubit>(
-          create: (_) => di.sl<AuthCubit>(),
+          create: (_) => di.sl<AuthCubit>()..loadCurrentUser(),
         ),
         BlocProvider<CustomerCubit>(
           create: (_) => di.sl<CustomerCubit>()..loadCustomers(),

@@ -5,21 +5,63 @@ import 'package:daftar_tech/core/utils/phone_formatter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/user_entity.dart';
+import '../../domain/usecases/get_current_user_usecase.dart';
 import '../../domain/usecases/register_user_usecase.dart';
 import '../../domain/usecases/send_otp_usecase.dart';
+import '../../domain/usecases/sign_out_usecase.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final RegisterUserUseCase registerUserUseCase;
   final SendOtpUseCase sendOtpUseCase;
+  final GetCurrentUserUseCase getCurrentUserUseCase;
+  final SignOutUseCase signOutUseCase;
 
   Timer? _resendTimer;
   String _phone = '';
+  UserEntity? _currentUser;
 
   AuthCubit({
     required this.registerUserUseCase,
     required this.sendOtpUseCase,
+    required this.getCurrentUserUseCase,
+    required this.signOutUseCase,
   }) : super(AuthInitial());
+
+  /// المستخدم صاحب الجلسة الحالية (لو موجود).
+  UserEntity? get currentUser => _currentUser;
+
+  /// قراءة الجلسة السارية عند فتح التطبيق لعرض بيانات الحساب الحقيقي.
+  Future<void> loadCurrentUser() async {
+    final result = await getCurrentUserUseCase();
+
+    result.fold(
+      (_) {
+        _currentUser = null;
+      },
+      (user) {
+        if (user == null) return;
+        _currentUser = user;
+        _phone = user.phone;
+        _emitSafe(AuthAuthenticated(user));
+      },
+    );
+  }
+
+  /// تسجيل الخروج: يمسح جلسة Supabase والنسخة المحلية.
+  Future<void> signOut() async {
+    _cancelTimer();
+    final result = await signOutUseCase();
+
+    result.fold(
+      (failure) => _emitSafe(AuthError(failure.message)),
+      (_) {
+        _currentUser = null;
+        _phone = '';
+        _emitSafe(const AuthSignedOut());
+      },
+    );
+  }
 
   /// عدد الثواني المتبقية قبل السماح بإعادة إرسال الرمز.
   int get remainingSeconds => state is AuthOtpSent
@@ -74,7 +116,10 @@ class AuthCubit extends Cubit<AuthState> {
 
     result.fold(
       (failure) => _emitSafe(AuthError(failure.message)),
-      (user) => _emitSafe(AuthSuccess(user)),
+      (user) {
+        _currentUser = user;
+        _emitSafe(AuthSuccess(user));
+      },
     );
   }
 
